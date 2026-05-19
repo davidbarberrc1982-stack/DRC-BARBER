@@ -1,0 +1,34 @@
+import streamlit as st
+import pandas as pd
+
+# Inicializar almacenamiento de citas
+if "citas" not in st.session_state:
+    st.session_state.citas = pd.DataFrame(columns=["Cliente", "Fecha", "Hora", "Servicio"])
+
+st.title("Agenda DAVIBARBER 💈")
+
+# Formulario para agendar cita
+with st.form("agendar_cita"):
+    cliente = st.text_input("Nombre del cliente")
+    fecha = st.date_input("Fecha")
+    hora = st.time_input("Hora")
+    servicio = st.selectbox("Servicio", ["Corte", "Barba", "Corte + Barba"])
+    agregar = st.form_submit_button("Agregar Cita")
+
+    if agregar:
+        nueva_cita = {"Cliente": cliente, "Fecha": fecha, "Hora": hora, "Servicio": servicio}
+        st.session_state.citas = pd.concat([st.session_state.citas, pd.DataFrame([nueva_cita])], ignore_index=True)
+        st.success("✅ Cita agregada correctamente")
+
+# Mostrar citas agendadas
+st.subheader("Citas Agendadas:")
+st.table(st.session_state.citas)
+
+# Eliminar cita por nombre
+nombre_eliminar = st.text_input("Nombre del cliente a eliminar")
+if st.button("Eliminar cita"):
+    if nombre_eliminar in st.session_state.citas["Cliente"].values:
+        st.session_state.citas = st.session_state.citas[st.session_state.citas["Cliente"] != nombre_eliminar]
+        st.warning(f"❌ Cita de {nombre_eliminar} eliminada")
+    else:
+        st.info("No se encontró esa cita")
