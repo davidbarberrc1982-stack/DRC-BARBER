@@ -1,0 +1,116 @@
+import tkinter as tk
+from tkinter import messagebox
+from PIL import Image, ImageTk
+from tkcalendar import DateEntry
+import ttkbootstrap as tb
+
+citas = []
+
+def guardar_citas():
+    with open("citas.txt", "w", encoding="utf-8") as f:
+        for c in citas:
+            f.write(f"{c['cliente']},{c['fecha']},{c['hora']},{c['servicio']}\n")
+
+def cargar_citas():
+    try:
+        with open("citas.txt", "r", encoding="utf-8") as f:
+            for linea in f:
+                cliente, fecha, hora, servicio = linea.strip().split(",")
+                citas.append({"cliente": cliente, "fecha": fecha, "hora": hora, "servicio": servicio})
+    except FileNotFoundError:
+        pass
+
+def agregar_cita():
+    cliente = entry_cliente.get()
+    fecha = entry_fecha.get()  # calendario visible
+    hora = f"{entry_hora.get()}:{entry_minuto.get()}"
+    servicio = entry_servicio.get()
+
+    if cliente and fecha and hora and servicio:
+        citas.append({"cliente": cliente, "fecha": fecha, "hora": hora, "servicio": servicio})
+        guardar_citas()
+        messagebox.showinfo("DAVIBARBER", f"Cita registrada para {cliente}")
+        limpiar_campos()
+        mostrar_citas()
+    else:
+        messagebox.showwarning("DAVIBARBER", "Completa todos los campos")
+
+def mostrar_citas():
+    listbox_citas.delete(0, tk.END)
+    for c in citas:
+        listbox_citas.insert(tk.END, f"{c['cliente']} - {c['fecha']} {c['hora']} ({c['servicio']})")
+
+def eliminar_cita():
+    seleccion = listbox_citas.curselection()
+    if seleccion:
+        index = seleccion[0]
+        cliente = citas[index]['cliente']
+        citas.pop(index)
+        guardar_citas()
+        mostrar_citas()
+        messagebox.showinfo("DAVIBARBER", f"Cita de {cliente} eliminada")
+    else:
+        messagebox.showwarning("DAVIBARBER", "Selecciona una cita para eliminar")
+
+def limpiar_campos():
+    entry_cliente.delete(0, tk.END)
+    entry_servicio.delete(0, tk.END)
+
+# --- Interfaz gráfica ---
+ventana = tb.Window(themename="superhero")
+ventana.title("Agenda DAVIBARBER")
+ventana.geometry("500x600")
+
+# Banner superior con diseño de corte
+try:
+    banner_img = Image.open("banner.png")
+    banner_img = banner_img.resize((500, 120))
+    banner = ImageTk.PhotoImage(banner_img)
+    tk.Label(ventana, image=banner, bg="#002868").pack(pady=10)
+except:
+    tk.Label(ventana, text="DAVIBARBER", bg="#002868", fg="white", font=("Arial", 20, "bold")).pack(pady=10)
+
+# Título
+tk.Label(ventana, text="Agenda DAVIBARBER", bg="#002868", fg="white", font=("Arial", 20, "bold")).pack(pady=5)
+
+# Campos
+frame_inputs = tk.Frame(ventana, bg="#002868")
+frame_inputs.pack(pady=10)
+
+tk.Label(frame_inputs, text="Cliente:", bg="#002868", fg="white").grid(row=0, column=0)
+entry_cliente = tk.Entry(frame_inputs)
+entry_cliente.grid(row=0, column=1)
+
+tk.Label(frame_inputs, text="Fecha:", bg="#002868", fg="white").grid(row=1, column=0)
+entry_fecha = DateEntry(frame_inputs, width=12, background='darkblue',
+                        foreground='white', borderwidth=2, date_pattern="dd/mm/yyyy")
+entry_fecha.grid(row=1, column=1)
+
+tk.Label(frame_inputs, text="Hora:", bg="#002868", fg="white").grid(row=2, column=0)
+frame_hora = tk.Frame(frame_inputs, bg="#002868")
+frame_hora.grid(row=2, column=1)
+entry_hora = tk.Spinbox(frame_hora, from_=0, to=23, width=5, wrap=True)
+entry_hora.pack(side="left", padx=5)
+entry_minuto = tk.Spinbox(frame_hora, from_=0, to=59, width=5, wrap=True)
+entry_minuto.pack(side="left", padx=5)
+
+tk.Label(frame_inputs, text="Servicio:", bg="#002868", fg="white").grid(row=3, column=0)
+entry_servicio = tk.Entry(frame_inputs)
+entry_servicio.grid(row=3, column=1)
+
+# Botones
+frame_botones = tk.Frame(ventana, bg="#002868")
+frame_botones.pack(pady=10)
+
+tk.Button(frame_botones, text="Agregar Cita", bg="#BF0A30", fg="white", font=("Arial", 12, "bold"), command=agregar_cita).grid(row=0, column=0, padx=10)
+tk.Button(frame_botones, text="Eliminar Cita", bg="#3C3B6E", fg="white", font=("Arial", 12, "bold"), command=eliminar_cita).grid(row=0, column=1, padx=10)
+
+# Lista de citas
+tk.Label(ventana, text="Citas Agendadas:", bg="#002868", fg="white", font=("Arial", 14, "bold")).pack()
+listbox_citas = tk.Listbox(ventana, width=50, height=10, bg="white", fg="black", highlightbackground="#BF0A30")
+listbox_citas.pack(pady=10)
+
+cargar_citas()
+mostrar_citas()
+
+ventana.mainloop()
