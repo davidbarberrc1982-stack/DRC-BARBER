@@ -1,0 +1,113 @@
+import tkinter as tk
+from tkinter import messagebox
+
+citas = []
+
+def guardar_citas():
+    with open("citas.txt", "w") as f:
+        for c in citas:
+            f.write(f"{c['cliente']},{c['fecha']},{c['hora']},{c['servicio']}\n")
+
+def cargar_citas():
+    try:
+        with open("citas.txt", "r") as f:
+            for linea in f:
+                cliente, fecha, hora, servicio = linea.strip().split(",")
+                citas.append({"cliente": cliente, "fecha": fecha, "hora": hora, "servicio": servicio})
+    except FileNotFoundError:
+        pass
+
+def agregar_cita():
+    cliente = entry_cliente.get()
+    fecha = entry_fecha.get()
+    hora = entry_hora.get()
+    servicio = entry_servicio.get()
+
+    if cliente and fecha and hora and servicio:
+        citas.append({"cliente": cliente, "fecha": fecha, "hora": hora, "servicio": servicio})
+        guardar_citas()
+        messagebox.showinfo("DAVIBARBER", f"Cita registrada para {cliente}")
+        limpiar_campos()
+        mostrar_citas()
+    else:
+        messagebox.showwarning("DAVIBARBER", "Completa todos los campos")
+
+def mostrar_citas():
+    listbox_citas.delete(0, tk.END)
+    for c in citas:
+        listbox_citas.insert(tk.END, f"{c['cliente']} - {c['fecha']} {c['hora']} ({c['servicio']})")
+
+def eliminar_cita():
+    seleccion = listbox_citas.curselection()
+    if seleccion:
+        index = seleccion[0]
+        cliente = citas[index]['cliente']
+        citas.pop(index)
+        guardar_citas()
+        mostrar_citas()
+        messagebox.showinfo("DAVIBARBER", f"Cita de {cliente} eliminada")
+    else:
+        messagebox.showwarning("DAVIBARBER", "Selecciona una cita para eliminar")
+
+def limpiar_campos():
+    entry_cliente.delete(0, tk.END)
+    entry_fecha.delete(0, tk.END)
+    entry_hora.delete(0, tk.END)
+    entry_servicio.delete(0, tk.END)
+
+# --- Interfaz gráfica ---
+ventana = tk.Tk()
+ventana.title("Agenda DAVIBARBER")
+ventana.geometry("500x500")
+ventana.configure(bg="#002868")  # azul bandera USA
+
+# Encabezado con estrellas rojas
+header = tk.Frame(ventana, bg="#BF0A30")
+header.pack(fill="x")
+for i in range(10):
+    tk.Label(header, text="★", fg="red", bg="#BF0A30", font=("Arial", 16, "bold")).pack(side="left", padx=5)
+
+tk.Label(ventana, text="Agenda DAVIBARBER", bg="#002868", fg="white", font=("Arial", 20, "bold")).pack(pady=10)
+
+# Campos de entrada
+frame_inputs = tk.Frame(ventana, bg="#002868")
+frame_inputs.pack(pady=10)
+
+tk.Label(frame_inputs, text="Cliente:", bg="#002868", fg="white").grid(row=0, column=0)
+entry_cliente = tk.Entry(frame_inputs)
+entry_cliente.grid(row=0, column=1)
+
+tk.Label(frame_inputs, text="Fecha (dd/mm/aaaa):", bg="#002868", fg="white").grid(row=1, column=0)
+entry_fecha = tk.Entry(frame_inputs)
+entry_fecha.grid(row=1, column=1)
+
+tk.Label(frame_inputs, text="Hora (hh:mm):", bg="#002868", fg="white").grid(row=2, column=0)
+entry_hora = tk.Entry(frame_inputs)
+entry_hora.grid(row=2, column=1)
+
+tk.Label(frame_inputs, text="Servicio:", bg="#002868", fg="white").grid(row=3, column=0)
+entry_servicio = tk.Entry(frame_inputs)
+entry_servicio.grid(row=3, column=1)
+
+# Botones
+frame_botones = tk.Frame(ventana, bg="#002868")
+frame_botones.pack(pady=10)
+
+tk.Button(frame_botones, text="Agregar Cita", bg="#BF0A30", fg="white", font=("Arial", 12, "bold"), command=agregar_cita).grid(row=0, column=0, padx=10)
+tk.Button(frame_botones, text="Eliminar Cita", bg="#3C3B6E", fg="white", font=("Arial", 12, "bold"), command=eliminar_cita).grid(row=0, column=1, padx=10)
+
+# Lista de citas
+tk.Label(ventana, text="Citas Agendadas:", bg="#002868", fg="white", font=("Arial", 14, "bold")).pack()
+listbox_citas = tk.Listbox(ventana, width=50, height=10, bg="white", fg="black", highlightbackground="#BF0A30")
+listbox_citas.pack(pady=10)
+
+# Pie con estrellas rojas
+footer = tk.Frame(ventana, bg="#BF0A30")
+footer.pack(fill="x", side="bottom")
+for i in range(10):
+    tk.Label(footer, text="★", fg="red", bg="#BF0A30", font=("Arial", 16, "bold")).pack(side="left", padx=5)
+
+cargar_citas()
+mostrar_citas()
+
+ventana.mainloop()
